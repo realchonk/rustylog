@@ -1,0 +1,101 @@
+#+NAME: A Rust-like hardware description language, transpiled directly into Verilog
+#+AUTHOR: Benjamin Stürz <benni@stuerz.xyz>
+
+* Introduction
+This projects attempts to create a Rust-like hardware description language.
+Note that this has nothing to do with Rust itself, it just has a very similar syntax as Rust.
+Although in the distant future this could change.
+
+At the moment this is just a mock-up.
+No code has been written yet on the Transpiler front.
+
+* Examples
+** A simple blinking LED
+#+begin_src rust
+pub struct HelloWorld {
+	pub led: Output<Reg>,
+	pub clk: Input<Wire>,
+}
+
+impl HelloWorld {
+	fn next_state(led: Wire) -> Wire {
+		~led
+	}
+	
+	#[always@(led: posedge)]
+	fn toggle_led(&mut self) {
+		self.led <= Self::next_state(self.led);
+	}
+}
+#+end_src
+** A more complex example
+#+begin_src rust
+/// A simple 4bit adder.
+pub struct Adder4Bit {
+	pub x: Input<[Wire; 4]>,
+	pub y: Input<[Wire; 4]>,
+	pub out: Output<[Wire; 4]>,
+}
+
+impl Adder4Bit {
+	// assign out = x + y;
+	#[assign]
+	fn out(&self) -> [Wire; 4] {
+		self.x + self.y
+	}
+}
+
+/// A simple thing that uses a 4bit adder to increment a register.
+pub struct Thing {
+	out: Output<[Wire; 4]>,
+	clk: Input<Wire>,
+
+	state: [Reg; 4],
+	y: [Wire; 4],
+	adder: Adder4Bit,
+}
+
+impl Thing {
+	#[assign]
+	fn y(&self) -> [Wire; 4] {
+		[0, 0, 0, 1]
+	}
+
+	#[assign]
+	fn out(&self) -> [Wire; 4] {
+		self.state
+	}
+
+	pub fn new(out: Output<[Wire; 4]>, clk: Input<Wire>) -> Self {
+		Controller {
+			out,
+			clk,
+			state: [0; 4],
+			adder: Adder4Bit {
+				x: Self::state,
+				y: Self::y,
+				out: Self::out,
+			},
+		}
+	}
+
+	#[always@(clk: posedge)]
+	fn inc_state(&mut self) {
+		self.state <= self.state + 1;
+	}
+}
+
+
+/// This would be the top-level module in Verilog
+pub struct Top {
+	thing: Thing,
+}
+
+impl Top {
+	pub fn new(leds: Output<[Wire; 10]>, buttons: Input<[Wire; 10]>) -> Self {
+		Self {
+			thing: Thing::new(leds[0..4], buttons[0]),
+		}
+	}
+}
+#+end_src
