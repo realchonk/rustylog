@@ -3,11 +3,15 @@
 
 * Introduction
 This projects attempts to create a Rust-like hardware description language.
-Note that this has nothing to do with Rust itself, it just has a very similar syntax as Rust.
-Although in the distant future this could change.
+Note that this has nothing to do with Rust itself, it just has a very similar syntax to Rust.
+At the moment this project is in it's early planning stage.
+No code has been written on the Transpiler front, yet.
 
-At the moment this is just a mock-up.
-No code has been written yet on the Transpiler front.
+* How it should work
+You write some Rust-like HDL and use the transpiler to turn it into Verilog.
+
+* Contributing
+I mainly want your opinions on the syntax of this HDL.
 
 * Examples
 ** A simple blinking LED
