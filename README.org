@@ -58,8 +58,8 @@ This is not the final syntax/grammar, it may change drastically!
 			  
 <function> := <fn-macro> 'pub'? 'fn' <ident> '(' (<ident> ':' <type> ',')* ')' ('->' <type>)? <block-stmt>;
 
-<impl> := 'impl' <ident> '{' <function>* '}'
-<struct> := 'pub'? 'struct' <ident> '{' ('pub'? <ident> ':' <type> ',')* '}'
+<impl> := 'impl' <ident> '{' <function>* '}';
+<struct> := 'pub'? 'struct' <ident> '{' ('pub'? <ident> ':' <type> ',')* '}';
 
 <program> := (<struct> | <impl>)*;
 #+end_src
