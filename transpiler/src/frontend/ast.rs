@@ -44,8 +44,8 @@ pub enum IOSpec {
 
 #[derive(Debug)]
 pub struct Type {
-	io: Option<IOSpec>,
-	sub: SubType,
+	io: Option<WithPos<IOSpec>>,
+	sub: WithPos<SubType>,
 }
 
 #[derive(Debug)]
@@ -322,6 +322,12 @@ impl Display for Declaration {
 
 impl Display for Function {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		if self.fn_macro.is_some() {
+			writeln!(f, "{}", self.fn_macro.as_ref().unwrap())?;
+		}
+		if self.is_pub {
+			write!(f, "pub ")?;
+		}
 		write!(f, "fn {}(", self.ident)?;
 		if self.params.len() != 0 {
 			let mut iter = self.params.iter();
