@@ -28,10 +28,11 @@ This is not the final syntax/grammar, it may change drastically!
 		  | <ident>
 		  ;
 
+<index> := <int> ('..' <int>)?;
 
 <subtype> := 'Logic'
 		  	 | 'Tri'
-		  	 | '[' <subtype> ';' <int> ']'
+		  	 | '[' <subtype> ';' <index> ']'
 			 ;
 
 <type> := ('Input' | 'Output' | 'InOut') '<' <subtype> '>'
@@ -42,7 +43,7 @@ This is not the final syntax/grammar, it may change drastically!
 			 	| <expression> ['+' | '-'] <expression>
 				| <name> '{' (<name> (':' <expression>)? ',')* '}'
 				| <name> '(' (<expression> ',')* ')'
-				| <name> '[' (<int> | <int>? '..' <int>?) ']'
+				| <name> '[' <index> ']'
 				;
 
 <block-stmt> := '{' <statement>* '}';
