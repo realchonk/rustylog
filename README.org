@@ -19,14 +19,9 @@ This is not the final syntax/grammar, it may change drastically!
 <ident> := [a-zA-Z_]+;
 <int> := [0-9]+;
 
-<namespace> := <namespace> '::' <ident>
-			   | <ident>
-			   ;
-	
-<name> := <namespace> '::' <ident>
-	   	  | 'self' '.' <ident>
-		  | <ident>
-		  ;
+<vname> := ('self' '.')? <ident>;
+<qname> := (<ident> '::')* <ident>;
+<qvname> := <qname> | <vname>;
 
 <index> := <int> ('..' <int>)?;
 
@@ -39,30 +34,36 @@ This is not the final syntax/grammar, it may change drastically!
 	   	  | <subtype>
 		  ;
 	
-<expression> := <name>
+<expression> := <vname>
+			 	| '~' <expression>
 			 	| <expression> ['+' | '-'] <expression>
-				| <name> '{' (<name> (':' <expression>)? ',')* '}'
-				| <name> '(' (<expression> ',')* ')'
-				| <name> '[' <index> ']'
+				| <qname> '{' (<ident> (':' <expression>)? ',')* '}'
+				| <qvname> '(' (<expression> ',')* ')'
+				| <vname> '[' <index> ']'
 				;
 
 <block-stmt> := '{' <statement>* '}';
 				
 <statement> := 'if' <expression> <block-stmt> ('else' <block-stmt>)?
-			   | <name> ('<=' | '=') <expression>
+			   | <vname> ('<=' | '=') <expression>
 			   | <block-stmt>
 			   ;
 
-<fn-macro> := '#[always_ff(' (<ident> (':' ('posedge' | 'negedge' | 'pos' | 'neg'))?)* ')]'
+<trigger> := 'posedge' | 'negedge' | 'pos' | 'neg';
+// TODO: find appropriate name for <sensor>
+<sensor> := <ident> (':' <trigger>)?;
+<fn-macro> := '#[always_ff(' (<sensor> ',')* ')]'
 		   	  | '#[always_comb]'
 			  ;
 			  
-<function> := <fn-macro> 'pub'? 'fn' <ident> '(' (<ident> ':' <type> ',')* ')' ('->' <type>)? <block-stmt>;
+<declaration> := <ident> ':' <type>;
+			  
+<function> := <fn-macro> 'pub'? 'fn' <ident> '(' (<declaration> ',')* ')' ('->' <type>)? <block-stmt>;
 
 <impl> := 'impl' <ident> '{' <function>* '}';
-<struct> := 'pub'? 'struct' <ident> '{' ('pub'? <ident> ':' <type> ',')* '}';
-
-<program> := (<struct> | <impl>)*;
+<struct> := 'pub'? 'struct' <ident> '{' ('pub'? <declaration> ',')* '}';
+<element> := <impl> | <struct>;
+<program> := <element>*;
 #+end_src
 ** TODO
 *** type X = Y;

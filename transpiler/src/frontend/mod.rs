@@ -4,6 +4,7 @@ use std::rc::Rc;
 pub mod input;
 pub mod token;
 pub mod lexer;
+pub mod ast;
 
 #[derive(Debug, Clone)]
 pub struct SourceLocation {
@@ -45,4 +46,7 @@ where
 	}
 }
 
+impl<T: Sized + Display> WithPosTrait for T {}
+
+type WithPosBox<T> = Box<WithPos<T>>;
 

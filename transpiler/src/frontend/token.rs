@@ -1,5 +1,4 @@
 use std::fmt::{Formatter, Display};
-use super::WithPosTrait;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Token {
@@ -9,8 +8,6 @@ pub enum Token {
 	Keyword(&'static str),
 	EndOfFile,
 }
-
-impl WithPosTrait for Token {}
 
 impl Display for Token {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
