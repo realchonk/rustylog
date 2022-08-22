@@ -118,9 +118,11 @@ impl Top {
 
 * Resources
 ** [[http://llhd.io][LLHD]]
+** [[https://sutherland-hdl.com/papers/2013-SNUG-SV_Synthesizable-SystemVerilog_paper.pdf][Synthesizable Verilog]]
 
 * TODOs
 ** type X = Y;
 ** Syntactic Sugar for State Machines
 ** Look into nom
 ** Integration with LLHD
+** Look into [[https://github.com/B-Lang-org/bsc][Bluespec]]
