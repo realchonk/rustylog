@@ -1,4 +1,4 @@
-#+NAME: A Rust-like hardware description language, transpiled directly into Verilog
+#+NAME: A Rust-like hardware description language, transpiled directly into SystemVerilog
 #+AUTHOR: Benjamin Stürz <benni@stuerz.xyz>
 
 * Introduction
@@ -13,93 +13,108 @@ You write some Rust-like HDL and use the transpiler to turn it into Verilog.
 * Contributing
 I mainly want your opinions on the syntax of this HDL.
 
+* Syntax/Grammar
+This is not the final syntax/grammar, it may change drastically!
+#+begin_src text
+<ident> := [a-zA-Z_]+;
+<int> := [0-9]+;
+
+<namespace> := <namespace> '::' <ident>
+			   | <ident>
+			   ;
+	
+<name> := <namespace> '::' <ident>
+	   	  | 'self' '.' <ident>
+		  | <ident>
+		  ;
+
+
+<subtype> := 'Logic'
+		  	 | 'Tri'
+		  	 | '[' <subtype> ';' <int> ']'
+			 ;
+
+<type> := ('Input' | 'Output' | 'InOut') '<' <subtype> '>'
+	   	  | <subtype>
+		  ;
+	
+<expression> := <name>
+			 	| <expression> ['+' | '-'] <expression>
+				| <name> '{' (<name> (':' <expression>)? ',')* '}'
+				| <name> '(' (<expression> ',')* ')'
+				| <name> '[' (<int> | <int>? '..' <int>?) ']'
+				;
+
+<block-stmt> := '{' <statement>* '}';
+				
+<statement> := 'if' <expression> <block-stmt> ('else' <block-stmt>)?
+			   | <name> ('<=' | '=') <expression>
+			   | <block-stmt>
+			   ;
+
+<fn-macro> := '#[always_ff(' (<ident> (':' ('posedge' | 'negedge' | 'pos' | 'neg'))?)* ')]'
+		   	  | '#[always_comb]'
+			  ;
+			  
+<function> := <fn-macro> 'pub'? 'fn' <ident> '(' (<ident> ':' <type> ',')* ')' ('->' <type>)? <block-stmt>;
+
+<impl> := 'impl' <ident> '{' <function>* '}'
+<struct> := 'pub'? 'struct' <ident> '{' ('pub'? <ident> ':' <type> ',')* '}'
+
+<program> := (<struct> | <impl>)*;
+#+end_src
+** TODO
+*** type X = Y;
 * Examples
-** A simple blinking LED
+** Accumulator (from llhd.io)
 #+begin_src rust
-pub struct HelloWorld {
-	pub led: Output<Reg>,
-	pub clk: Input<Wire>,
+pub struct Accumulator {
+	pub clk: Input<Logic>,
+	pub direction: Input<Logic>,
+	pub increment: Input<[Logic; 16]>,
+	pub result: Output<[Logic; 16]>,
+
+	next: [Logic; 16],
 }
 
-impl HelloWorld {
-	fn next_state(led: Wire) -> Wire {
-		~led
+impl Accumulator {
+	pub fn new(clk: Input<Logic>, direction: Input<Logic>, increment: Input<[Logic; 16]>, result: Output<[Logic; 16]>) -> Self {
+		Self {
+			clk,
+			direction,
+			increment,
+			result,
+			// TODO: next
+		}
 	}
 	
-	#[always@(led: posedge)]
-	fn toggle_led(&mut self) {
-		self.led <= Self::next_state(self.led);
-	}
-}
-#+end_src
-** A more complex example
-#+begin_src rust
-/// A simple 4bit adder.
-pub struct Adder4Bit {
-	pub x: Input<[Wire; 4]>,
-	pub y: Input<[Wire; 4]>,
-	pub out: Output<[Wire; 4]>,
-}
-
-impl Adder4Bit {
-	// assign out = x + y;
-	#[assign]
-	fn out(&self) -> [Wire; 4] {
-		self.x + self.y
-	}
-}
-
-/// A simple thing that uses a 4bit adder to increment a register.
-pub struct Thing {
-	out: Output<[Wire; 4]>,
-	clk: Input<Wire>,
-
-	state: [Reg; 4],
-	y: [Wire; 4],
-	adder: Adder4Bit,
-}
-
-impl Thing {
-	#[assign]
-	fn y(&self) -> [Wire; 4] {
-		[0, 0, 0, 1]
-	}
-
-	#[assign]
-	fn out(&self) -> [Wire; 4] {
-		self.state
-	}
-
-	pub fn new(out: Output<[Wire; 4]>, clk: Input<Wire>) -> Self {
-		Controller {
-			out,
-			clk,
-			state: [0; 4],
-			adder: Adder4Bit {
-				x: Self::state,
-				y: Self::y,
-				out: Self::out,
-			},
+	#[always_comb]
+	fn increment(&mut self) {
+		if self.direction {
+			self.result = self.result + self.increment;
+		} else {
+			self.result = self.result - self.increment;
 		}
 	}
 
-	#[always@(clk: posedge)]
-	fn inc_state(&mut self) {
-		self.state <= self.state + 1;
+	#[always_ff(clk: posedge)]
+	fn load_result(&mut self) {
+		self.result <= self.next;
 	}
 }
 
-
-/// This would be the top-level module in Verilog
 pub struct Top {
-	thing: Thing,
+	acc: Accumulator,
 }
 
 impl Top {
-	pub fn new(leds: Output<[Wire; 10]>, buttons: Input<[Wire; 10]>) -> Self {
+	pub fn new(clk: Input<Logic>, direction: Input<Logic>, increment: Input<[Logic; 16]>, result: Output<[Logic; 16]>) -> Top {
 		Self {
-			thing: Thing::new(leds[0..4], buttons[0]),
+			acc: Accumulator::new(clk, direction, increment, result),
 		}
 	}
 }
 #+end_src
+
+* Resources/TODO
+** [[http://llhd.io][LLHD]]
