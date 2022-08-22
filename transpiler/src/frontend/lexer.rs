@@ -1,6 +1,9 @@
 use super::{SourceLocation,
-			token::{Token, TokenData},
-			input::Input};
+			token::Token,
+			input::Input,
+			WithPos,
+			WithPosTrait,
+};
 use std::fmt::{Display, Formatter};
 use std::str::Chars;
 use std::iter::Peekable;
@@ -21,7 +24,7 @@ struct Operator {
 }
 
 #[derive(Debug)]
-pub struct Lexer<'a>(LexerImpl<'a>, Option<Token>);
+pub struct Lexer<'a>(LexerImpl<'a>, Option<WithPos<Token>>);
 
 #[derive(Debug)]
 struct LexerImpl<'a> {
@@ -35,7 +38,7 @@ impl<'a> Lexer<'a> {
 		Self(LexerImpl::new(ops, keywords, input), None)
 	}
 
-	pub fn peek(&mut self) -> LResult<&Token> {
+	pub fn peek(&mut self) -> LResult<&WithPos<Token>> {
 		if !self.1.is_some() {
 			self.1 = Some(self.0.lex()?);
 		}
@@ -43,7 +46,7 @@ impl<'a> Lexer<'a> {
 		Ok(self.1.as_ref().unwrap())
 	}
 
-	pub fn next(&mut self) -> LResult<Token> {
+	pub fn next(&mut self) -> LResult<WithPos<Token>> {
 		if self.1.is_some() {
 			Ok(self.1.take().unwrap())
 		} else {
@@ -103,7 +106,7 @@ impl<'a> LexerImpl<'a> {
 		}
 	}
 
-	fn lex(&mut self) -> LResult<Token> {
+	fn lex(&mut self) -> LResult<WithPos<Token>> {
 		let isname0 = | ch: char | ch.is_alphabetic() || ch == '_';
 		let isname = | ch: char | ch.is_alphanumeric() || ch == '_';
 
@@ -113,7 +116,7 @@ impl<'a> LexerImpl<'a> {
 
 		let ch = match ch {
 			Some(x) => x,
-			None	=> return Ok(Token { end: begin.clone(), begin, data: TokenData::EndOfFile }),
+			None	=> return Ok(Token::EndOfFile.with_pos(begin.clone(), begin)),
 		};
 
 		if isname0(ch) {
@@ -135,10 +138,10 @@ impl<'a> LexerImpl<'a> {
 
 			for kw in self.keywords {
 				if *kw == s {
-					return Ok(Token { begin, end, data: TokenData::Keyword(kw) });
+					return Ok(Token::Keyword(kw).with_pos(begin, end));
 				}
 			}
-			Ok(Token { begin, end, data: TokenData::Name(s) })
+			Ok(Token::Name(s).with_pos(begin, end))
 		} else if ch.is_digit(10) {
 			let mut i_val = 0u128;
 
@@ -153,10 +156,10 @@ impl<'a> LexerImpl<'a> {
 
 			let end = self.input.pos();
 
-			Ok(Token { begin, end, data: TokenData::Integer(i_val) })
+			Ok(Token::Integer(i_val).with_pos(begin, end))
 		} else {
 			match Self::next_op(&mut self.input, &self.operators) {
-				Some(op)	=> Ok(Token { end: begin.clone(), begin, data: TokenData::Operator(op.s) }),
+				Some(op)	=> Ok(Token::Operator(op.s).with_pos(begin.clone(), begin)),
 				None		=> Err(LexicalError::InvalidInput(begin, ch)),
 			}
 		}
@@ -197,13 +200,13 @@ mod tests {
 		let input = Input::new(code, "<source>".to_string());
 		let mut lexer = Lexer::new(&operators, &keywords, input);
 
-		use TokenData::*;
-		assert_eq!(lexer.next().unwrap().data, Integer(3));
-		assert_eq!(lexer.next().unwrap().data, Operator("+"));
-		assert_eq!(lexer.next().unwrap().data, Integer(2));
-		assert_eq!(lexer.next().unwrap().data, Keyword("mut"));
-		assert_eq!(lexer.next().unwrap().data, Keyword("struct"));
-		assert_eq!(lexer.next().unwrap().data, Operator("{"));
+		use Token::*;
+		assert_eq!(lexer.next().unwrap().inner, Integer(3));
+		assert_eq!(lexer.next().unwrap().inner, Operator("+"));
+		assert_eq!(lexer.next().unwrap().inner, Integer(2));
+		assert_eq!(lexer.next().unwrap().inner, Keyword("mut"));
+		assert_eq!(lexer.next().unwrap().inner, Keyword("struct"));
+		assert_eq!(lexer.next().unwrap().inner, Operator("{"));
 
 	}
 }

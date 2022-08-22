@@ -17,3 +17,32 @@ impl Display for SourceLocation {
 		write!(f, "{}:{}:{}", self.file, self.line, self.col)
 	}
 }
+
+
+#[derive(Debug)]
+pub struct WithPos<T: Display> {
+	pub begin: SourceLocation,
+	pub end: SourceLocation,
+	pub inner: T,
+}
+
+impl<T: Display> Display for WithPos<T> {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}", self.inner)
+	}
+}
+
+pub trait WithPosTrait
+where
+	Self: Sized + Display
+{
+	fn with_pos(self, begin: SourceLocation, end: SourceLocation) -> WithPos<Self> {
+		WithPos {
+			begin,
+			end,
+			inner: self,
+		}
+	}
+}
+
+

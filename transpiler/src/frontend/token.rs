@@ -1,8 +1,8 @@
 use std::fmt::{Formatter, Display};
-use crate::frontend::SourceLocation;
+use super::WithPosTrait;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum TokenData {
+pub enum Token {
 	Integer(u128),
 	Name(String),
 	Operator(&'static str),
@@ -10,22 +10,11 @@ pub enum TokenData {
 	EndOfFile,
 }
 
-#[derive(Debug)]
-pub struct Token {
-	pub begin: SourceLocation,
-	pub end: SourceLocation,
-	pub data: TokenData,
-}
+impl WithPosTrait for Token {}
 
 impl Display for Token {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{}", self.data)
-	}
-}
-
-impl Display for TokenData {
-	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		use TokenData::*;
+		use Token::*;
 		match self {
 			Integer(x)	=> write!(f, "{}", x),
 			Name(x)		=> write!(f, "{}", x),
