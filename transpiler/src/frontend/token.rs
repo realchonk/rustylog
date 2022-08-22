@@ -1,7 +1,7 @@
 use std::fmt::{Formatter, Display};
 use crate::frontend::SourceLocation;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TokenData {
 	Integer(u128),
 	Name(String),

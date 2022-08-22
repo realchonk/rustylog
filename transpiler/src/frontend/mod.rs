@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 pub mod input;
 pub mod token;
+pub mod lexer;
 
 #[derive(Debug, Clone)]
 pub struct SourceLocation {
