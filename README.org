@@ -1,17 +1,17 @@
-#+NAME: A Rust-like hardware description language, transpiled directly into SystemVerilog
+#+NAME: A Rust-like hardware description language, transpiled directly into (System-)Verilog
 #+AUTHOR: Benjamin Stürz <benni@stuerz.xyz>
 
 * Introduction
 This projects attempts to create a Rust-like hardware description language.
 Note that this has nothing to do with Rust itself, it just has a very similar syntax to Rust.
-At the moment this project is in it's early planning stage.
-No code has been written on the Transpiler front, yet.
+At the moment this project is in it's early planning and development stage.
 
 * How it should work
-You write some Rust-like HDL and use the transpiler to turn it into Verilog.
+You write some Rust-like HDL and use the transpiler to turn it into (System-)Verilog.
 
 * Contributing
 I mainly want your opinions on the syntax of this HDL.
+But code improvements are welcome too!
 
 * Syntax/Grammar
 This is not the final syntax/grammar, it may change drastically!
@@ -65,8 +65,6 @@ This is not the final syntax/grammar, it may change drastically!
 <element> := <impl> | <struct>;
 <program> := <element>*;
 #+end_src
-** TODO
-*** type X = Y;
 * Examples
 ** Accumulator (from llhd.io)
 #+begin_src rust
@@ -118,5 +116,11 @@ impl Top {
 }
 #+end_src
 
-* Resources/TODO
+* Resources
 ** [[http://llhd.io][LLHD]]
+
+* TODOs
+** type X = Y;
+** Syntactic Sugar for State Machines
+** Look into nom
+** Integration with LLHD
