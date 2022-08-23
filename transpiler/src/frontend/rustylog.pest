@@ -1,4 +1,18 @@
 
+Function = { FnMacro? ~ "pub"? ~ "fn" ~ "(" ~ Args? ~ ")" ~ ("->" ~ Type)? ~ BlockStmt }
+
+FnMacro = { "#[always_ff(" ~ AlwaysFFArgs ~ ")]" | "#[always_comb]" }
+AlwaysFFArg = { Ident ~ (":" ~ Trigger)? }
+AlwaysFFArgs = { AlwaysFFArg ~ ("," ~ AlwaysFFArg)* ~ ","? }
+
+Args = { (Arg | SelfRef) ~ ("," ~ Arg)* ~ ","? }
+Arg = { Ident ~ ":" ~ Type }
+SelfRef = { "&" ~ "mut"? ~ "self" }
+
+Type = { SubType | IOType ~ "<" ~ SubType ~ ">" }
+SubType = { "[" ~ SubType ~ ";" ~ Index ~ "]" | "logic" | "tri" | QName }
+
+
 Statement = { IfStmt
 		  	| AssignStmt
 			| BlockStmt
@@ -42,5 +56,7 @@ UnaryOp = @{ "+" | "-" | "~" }
 MulDivOp = @{ "*" | "/" }
 AddSubOp = @{ "+" | "-" }
 AssignOp = @{ "=" | "<=" }
+Trigger = @{ "posedge" | "negedge" }
+IOType = @{ "Input" | "Output" | "InOut" }
 
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }

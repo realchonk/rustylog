@@ -10,6 +10,9 @@ pub enum BinaryOp { Plus, Minus, Star, Slash, }
 pub enum AssignOp { Blocking, NonBlocking, }
 
 #[derive(Debug)]
+pub enum Trigger { PosEdge, NegEdge }
+
+#[derive(Debug)]
 pub struct VName {
 	pub is_self: bool,
 	pub ident: String,
@@ -49,6 +52,42 @@ pub enum Statement {
 	Assign { left: VName, op: AssignOp, right: Expression },
 	Block(BlockStmt),
 }
+
+#[derive(Debug)]
+pub struct Function {
+	pub fn_macro: Option<FnMacro>,
+	pub is_pub: bool,
+	pub name: String,
+	pub args: Vec<(String, Type)>,
+	pub ret_type: Option<Type>,
+	pub body: BlockStmt,
+}
+
+#[derive(Debug)]
+pub enum FnMacro {
+	AlwaysFF(Vec<(String, Option<Trigger>)>),
+	AlwaysComb,
+}
+
+#[derive(Debug)]
+pub enum SubType {
+	Array(Box<SubType>, u32),
+	Logic,
+	Tri,
+	QName(QName),
+}
+
+#[derive(Debug)]
+pub enum Type {
+	Input(SubType),
+	Output(SubType),
+	InOut(SubType),
+	Sub(SubType),
+}
+
+
+
+
 
 impl Display for UnaryOp {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
