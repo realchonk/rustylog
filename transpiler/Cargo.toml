@@ -1,6 +1,8 @@
 [package]
-name = "rusty-transpiler"
-version = "0.1.0"
+name = "rustylog"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
+pest = "2.0"
+pest_derive = "2.0"

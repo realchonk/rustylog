@@ -1,0 +1,36 @@
+
+
+AtomExpr = _{ Int
+		   | SubExpr
+		   | ArrayExpr
+		   | ConstructExpr
+		   | CallExpr
+		   | NameExpr
+}
+ExprList = _{ Expression ~ ("," ~ Expression)* ~ ","? }
+Constructor = { Ident ~ (":"  ~ Expression)? }
+ConstructorList = _{ Constructor ~ ("," ~ Constructor)* ~ ","? }
+
+NameExpr = { VName }
+CallExpr = { VName ~ "(" ~ ExprList? ~ ")" }
+ArrayExpr = { "[" ~ ExprList? ~ "]" }
+ConstructExpr = { QName ~ "{" ~ ConstructorList? ~ "}" }
+SubExpr = { "(" ~ Expression ~ ")" }
+
+IndexExpr = { AtomExpr ~ ("[" ~ Index ~ "]")* }
+UnaryExpr = { IndexExpr | UnaryOp ~ UnaryExpr }
+MulDivExpr = { UnaryExpr ~ (MulDivOp ~ UnaryExpr)* }
+AddSubExpr = { MulDivExpr ~ (AddSubOp ~ MulDivExpr)* }
+Expression = { AddSubExpr }
+
+VName = { ("self" ~ ".")? ~ Ident }
+QName = { (Ident ~ "::")* ~ Ident }
+Index = { Int ~ (".." ~ Int)? }
+
+Int = @{ ASCII_DIGIT+ }
+Ident = @{ ('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | '0'..'9' | "_")* }
+UnaryOp = @{ "+" | "-" | "~" }
+MulDivOp = @{ "*" | "/" }
+AddSubOp = @{ "+" | "-" }
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
