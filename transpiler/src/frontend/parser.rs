@@ -10,6 +10,50 @@ pub fn parse_expr(code: &str) -> Expression {
 	build_expr_from_pair(ast)
 }
 
+pub fn parse_stmt(code: &str) -> Statement {
+	let ast = RustylogParser::parse(Rule::Statement, code).unwrap().next().unwrap();
+	build_stmt_from_pair(ast)
+}
+
+
+fn build_stmt_from_pair(pair: Pair<Rule>) -> Statement {
+	match pair.as_rule() {
+		Rule::Statement => build_stmt_from_pair(pair.into_inner().next().unwrap()),
+		Rule::AssignStmt => {
+			let mut p = pair.into_inner();
+			let left = build_vname_from_pair(p.next().unwrap());
+			let op = AssignOp::from(p.next().unwrap().as_str());
+			let right = build_expr_from_pair(p.next().unwrap());
+
+			Statement::Assign { left, op, right }
+		},
+		Rule::BlockStmt => Statement::Block(build_block_stmt_from_pair(pair)),
+		Rule::IfStmt => {
+			let mut p = pair.into_inner();
+			let cond = build_expr_from_pair(p.next().unwrap());
+			let true_case = build_block_stmt_from_pair(p.next().unwrap());
+			let false_case = match p.next() {
+				Some(x)	=> Some(build_block_stmt_from_pair(x)),
+				None	=> None,
+			};
+
+			Statement::If { cond, true_case, false_case }
+		},
+
+		r => unimplemented!("{:?}", r),
+	}
+}
+fn build_block_stmt_from_pair(pair: Pair<Rule>) -> BlockStmt {
+	let mut p = pair.into_inner();
+	let mut stmts = Vec::new();
+	loop {
+		match p.next() {
+			Some(stmt)	=> stmts.push(build_stmt_from_pair(stmt)),
+			None		=> break BlockStmt(stmts),
+		}
+	}
+}
+
 fn build_expr_from_pair(pair: Pair<Rule>) -> Expression {
 	match pair.as_rule() {
 		Rule::Int => Expression::Int(pair.as_str().parse().unwrap()),

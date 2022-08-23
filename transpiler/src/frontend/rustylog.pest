@@ -1,4 +1,8 @@
 
+Statement = { IfStmt
+		  	| AssignStmt
+			| BlockStmt
+}
 
 AtomExpr = _{ Int
 		   | SubExpr
@@ -23,6 +27,11 @@ MulDivExpr = { UnaryExpr ~ (MulDivOp ~ UnaryExpr)* }
 AddSubExpr = { MulDivExpr ~ (AddSubOp ~ MulDivExpr)* }
 Expression = { AddSubExpr }
 
+BlockStmt = { "{" ~ Statement* ~ "}" }
+IfStmt = { "if" ~ Expression ~ BlockStmt ~ ("else" ~ BlockStmt)? }
+AssignStmt = { VName ~ AssignOp ~ Expression ~ ";" }
+
+
 VName = { ("self" ~ ".")? ~ Ident }
 QName = { (Ident ~ "::")* ~ Ident }
 Index = { Int ~ (".." ~ Int)? }
@@ -32,5 +41,6 @@ Ident = @{ ('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | '0'..'9' | "_")*
 UnaryOp = @{ "+" | "-" | "~" }
 MulDivOp = @{ "*" | "/" }
 AddSubOp = @{ "+" | "-" }
+AssignOp = @{ "=" | "<=" }
 
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }

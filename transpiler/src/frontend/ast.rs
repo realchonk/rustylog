@@ -7,6 +7,9 @@ pub enum UnaryOp { Plus, Minus, Tilde, }
 pub enum BinaryOp { Plus, Minus, Star, Slash, }
 
 #[derive(Debug)]
+pub enum AssignOp { Blocking, NonBlocking, }
+
+#[derive(Debug)]
 pub struct VName {
 	pub is_self: bool,
 	pub ident: String,
@@ -37,6 +40,16 @@ pub enum Expression {
 	Index { base: Box<Expression>, index: Index },
 }
 
+#[derive(Debug)]
+pub struct BlockStmt(pub Vec<Statement>);
+
+#[derive(Debug)]
+pub enum Statement {
+	If { cond: Expression, true_case: BlockStmt, false_case: Option<BlockStmt> },
+	Assign { left: VName, op: AssignOp, right: Expression },
+	Block(BlockStmt),
+}
+
 impl Display for UnaryOp {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		use UnaryOp::*;
@@ -56,6 +69,16 @@ impl Display for BinaryOp {
 			Minus	=> write!(f, "-"),
 			Star	=> write!(f, "*"),
 			Slash	=> write!(f, "/"),
+		}
+	}
+}
+
+impl Display for AssignOp {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		use AssignOp::*;
+		match self {
+			Blocking	=> write!(f, "="),
+			NonBlocking	=> write!(f, "<="),
 		}
 	}
 }
@@ -139,6 +162,35 @@ impl Display for Expression {
 	}
 }
 
+impl Display for BlockStmt {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		if self.0.is_empty() {
+			write!(f, "{{}}")
+		} else {
+			writeln!(f, "{{")?;
+			for stmt in &self.0 {
+				let s = format!("{}", stmt);
+				for s in s.split('\n') {
+					writeln!(f, "\t{}", s)?;
+				}
+			}
+			write!(f, "}}")
+		}
+	}
+}
+
+impl Display for Statement {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		use Statement::*;
+		match self {
+			If { cond, true_case, false_case: Some(fc) } => write!(f, "if {} {} else {}", cond, true_case, fc),
+			If { cond, true_case, false_case: None } => write!(f, "if {} {}", cond, true_case),
+			Assign { left, op, right } => write!(f, "{} {} {};", left, op, right),
+			Block(b) => write!(f, "{}", b),
+		}
+	}
+}
+
 impl From<&str> for UnaryOp {
 	fn from(s: &str) -> Self {
 		use UnaryOp::*;
@@ -160,6 +212,17 @@ impl From<&str> for BinaryOp {
 			"*"	=> Star,
 			"/"	=> Slash,
 			_	=> panic!("Invalid s: '{}'", s),
+		}
+	}
+}
+
+impl From<&str> for AssignOp {
+	fn from(s: &str) -> Self {
+		use AssignOp::*;
+		match s {
+			"="  => Blocking,
+			"<=" => NonBlocking,
+			_	 => panic!("Invalid s: '{}'", s),
 		}
 	}
 }
