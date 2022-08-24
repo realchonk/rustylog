@@ -122,6 +122,16 @@ impl Display for AssignOp {
 	}
 }
 
+impl Display for Trigger {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		use Trigger::*;
+		match self {
+			PosEdge	=> write!(f, "posedge"),
+			NegEdge	=> write!(f, "negedge"),
+		}
+	}
+}
+
 impl Display for VName {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		if self.is_self {
@@ -230,6 +240,82 @@ impl Display for Statement {
 	}
 }
 
+impl Display for Function {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		if let Some(fn_macro) = &self.fn_macro {
+			writeln!(f, "{}", fn_macro)?;
+		}
+
+		if self.is_pub {
+			write!(f, "pub ")?;
+		}
+
+		write!(f, "fn {}(", self.name)?;
+		if !self.args.is_empty() {
+			let mut iter = self.args.iter();
+			let x = iter.next().unwrap();
+			write!(f, "{}: {}", x.0, x.1)?;
+
+			for x in iter {
+				write!(f, ", {}: {}", x.0, x.1)?;
+			}
+		}
+		if let Some(rt) = &self.ret_type {
+			write!(f, ") -> {} {}", rt, self.body)
+		} else {
+			write!(f, ") {}", self.body)
+		}
+	}
+}
+
+impl Display for FnMacro {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		use FnMacro::*;
+		match self {
+			AlwaysFF(params) => {
+				fn write_param(f: &mut Formatter<'_>, pair: &(String, Option<Trigger>))  -> std::fmt::Result {
+					match pair {
+						(name, Some(trigger))	=> write!(f, "{}: {}", name, trigger),
+						(name, None)			=> write!(f, "{}", name),
+					}
+				}
+				write!(f, "#[always_ff(")?;
+				let mut iter = params.iter();
+				write_param(f, iter.next().unwrap())?;
+				for x in iter {
+					write_param(f, x)?;
+				}
+				write!(f, ")]")
+			},
+			AlwaysComb => write!(f, "#[always_comb]"),
+		}
+	}
+}
+
+impl Display for SubType {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		use SubType::*;
+		match self {
+			Array(sub, num)	=> write!(f, "[{}; {}]", sub, num),
+			Logic			=> write!(f, "logic"),
+			Tri				=> write!(f, "tri"),
+			QName(name)		=> write!(f, "{}", name),
+		}
+	}
+}
+
+impl Display for Type {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		use Type::*;
+		match self {
+			Input(sub)	=> write!(f, "Input<{}>", sub),
+			Output(sub)	=> write!(f, "Output<{}>", sub),
+			InOut(sub)	=> write!(f, "InOut<{}>", sub),
+			Sub(sub)	=> write!(f, "{}", sub),
+		}
+	}
+}
+
 impl From<&str> for UnaryOp {
 	fn from(s: &str) -> Self {
 		use UnaryOp::*;
@@ -237,7 +323,7 @@ impl From<&str> for UnaryOp {
 			"+"	=> Plus,
 			"-"	=> Minus,
 			"~"	=> Tilde,
-			_	=> panic!("Invalid s: '{}'", s),
+			_	=> panic!("Invalid UnaryOp: {}", s),
 		}
 	}
 }
@@ -250,7 +336,7 @@ impl From<&str> for BinaryOp {
 			"-"	=> Minus,
 			"*"	=> Star,
 			"/"	=> Slash,
-			_	=> panic!("Invalid s: '{}'", s),
+			_	=> panic!("Invalid BinaryOp: {}", s),
 		}
 	}
 }
@@ -261,7 +347,18 @@ impl From<&str> for AssignOp {
 		match s {
 			"="  => Blocking,
 			"<=" => NonBlocking,
-			_	 => panic!("Invalid s: '{}'", s),
+			_	 => panic!("Invalid AssignOp: {}", s),
+		}
+	}
+}
+
+impl From<&str> for Trigger {
+	fn from(s: &str) -> Self {
+		use Trigger::*;
+		match s {
+			"posedge"	=> PosEdge,
+			"negedge"	=> NegEdge,
+			_			=> panic!("Invalid Trigger: {}", s),
 		}
 	}
 }
