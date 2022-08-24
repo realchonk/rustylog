@@ -13,6 +13,9 @@ pub enum AssignOp { Blocking, NonBlocking, }
 pub enum Trigger { PosEdge, NegEdge }
 
 #[derive(Debug)]
+pub enum Visibility { Pub }
+
+#[derive(Debug)]
 pub struct VName {
 	pub is_self: bool,
 	pub ident: String,
@@ -54,10 +57,16 @@ pub enum Statement {
 }
 
 #[derive(Debug)]
+pub struct SelfRef {
+	pub mutable: bool,
+}
+
+#[derive(Debug)]
 pub struct Function {
 	pub fn_macro: Option<FnMacro>,
-	pub is_pub: bool,
+	pub visibility: Option<Visibility>,
 	pub name: String,
+	pub self_ref: Option<SelfRef>,
 	pub args: Vec<(String, Type)>,
 	pub ret_type: Option<Type>,
 	pub body: BlockStmt,
@@ -128,6 +137,15 @@ impl Display for Trigger {
 		match self {
 			PosEdge	=> write!(f, "posedge"),
 			NegEdge	=> write!(f, "negedge"),
+		}
+	}
+}
+
+impl Display for Visibility {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		use Visibility::*;
+		match self {
+			Pub	=> write!(f, "pub"),
 		}
 	}
 }
@@ -240,21 +258,36 @@ impl Display for Statement {
 	}
 }
 
+impl Display for SelfRef {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		if self.mutable {
+			write!(f, "&mut self")
+		} else {
+			write!(f, "&self")
+		}
+	}
+}
+
 impl Display for Function {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		if let Some(fn_macro) = &self.fn_macro {
 			writeln!(f, "{}", fn_macro)?;
 		}
 
-		if self.is_pub {
-			write!(f, "pub ")?;
+		if let Some(vis) = &self.visibility {
+			write!(f, "{} ", vis)?;
 		}
 
 		write!(f, "fn {}(", self.name)?;
+		let mut aprefix = "";
+		if let Some(self_ref) = &self.self_ref {
+			write!(f, "{}", self_ref)?;
+			aprefix = ", ";
+		}
 		if !self.args.is_empty() {
 			let mut iter = self.args.iter();
 			let x = iter.next().unwrap();
-			write!(f, "{}: {}", x.0, x.1)?;
+			write!(f, "{}{}: {}", aprefix, x.0, x.1)?;
 
 			for x in iter {
 				write!(f, ", {}: {}", x.0, x.1)?;
@@ -359,6 +392,16 @@ impl From<&str> for Trigger {
 			"posedge"	=> PosEdge,
 			"negedge"	=> NegEdge,
 			_			=> panic!("Invalid Trigger: {}", s),
+		}
+	}
+}
+
+impl From<&str> for Visibility {
+	fn from(s: &str) -> Self {
+		use Visibility::*;
+		match s {
+			"pub"	=> Pub,
+			_		=> panic!("Invalid Visibility: {}", s),
 		}
 	}
 }

@@ -15,6 +15,130 @@ pub fn parse_stmt(code: &str) -> Statement {
 	build_stmt_from_pair(ast)
 }
 
+pub fn parse_func(code: &str) -> Function {
+	let ast = RustylogParser::parse(Rule::Function, code).unwrap().next().unwrap();
+	build_func_from_pair(ast)
+}
+
+fn build_func_from_pair(pair: Pair<Rule>) -> Function {
+	let mut p = pair.into_inner();
+	let mut tk = p.next().unwrap();
+
+	let fn_macro = if tk.as_rule() == Rule::FnMacro {
+		let x = Some(build_fn_macro_from_pair(tk.into_inner().next().unwrap()));
+		tk = p.next().unwrap();
+		x
+	} else { None };
+
+	let visibility = if tk.as_rule() == Rule::Visibility {
+		let x = Some(Visibility::from(tk.as_str()));
+		tk = p.next().unwrap();
+		x
+	} else { None };
+
+	let name = String::from(tk.as_str());
+
+	let mut tk = p.next().unwrap();
+
+	let self_ref = if tk.as_rule() == Rule::SelfRef {
+		let is_mut = tk.into_inner().next().is_some();
+		tk = p.next().unwrap();
+		Some(SelfRef { mutable: is_mut })
+	} else { None };
+
+	let mut args = Vec::new();
+
+	loop {
+		match tk.as_rule() {
+			Rule::Arg => {
+				args.push(build_arg_from_pair(tk));
+				tk = p.next().unwrap();
+			},
+			_ => break,
+		}
+	}
+
+	let ret_type = if tk.as_rule() == Rule::Type {
+		let t =build_type_from_pair(tk);
+		tk = p.next().unwrap();
+		Some(t)
+	} else { None };
+
+	let body = build_block_stmt_from_pair(tk);
+
+	Function {
+		fn_macro,
+		visibility,
+		name,
+		self_ref,
+		args,
+		ret_type,
+		body,
+	}
+}
+
+fn build_arg_from_pair(pair: Pair<Rule>) -> (String, Type) {
+	let mut p = pair.into_inner();
+
+	let name = p.next().unwrap().as_str().to_string();
+	let typ = build_type_from_pair(p.next().unwrap());
+
+	(name, typ)
+}
+
+fn build_type_from_pair(pair: Pair<Rule>) -> Type {
+	let mut p = pair.into_inner();
+	let tk = p.next().unwrap();
+	if tk.as_rule() == Rule::IOType {
+		let sub = build_subtype_from_pair(p.next().unwrap());
+		match tk.as_str() {
+			"Input"		=> Type::Input(sub),
+			"Output"	=> Type::Output(sub),
+			"InOut"		=> Type::InOut(sub),
+			_			=> unimplemented!(),
+		}
+	} else {
+		Type::Sub(build_subtype_from_pair(tk))
+	}
+}
+
+fn build_subtype_from_pair(pair: Pair<Rule>) -> SubType {
+	let mut p = pair.into_inner();
+	let x = p.next().unwrap();
+	match x.as_rule() {
+		Rule::ArrayType	=> {
+			let mut p = x.into_inner();
+			let sub = build_subtype_from_pair(p.next().unwrap());
+			let num = p.next().unwrap().as_str().parse().unwrap();
+			SubType::Array(Box::new(sub), num)
+		},
+		Rule::LogicType => SubType::Logic,
+		Rule::TriType => SubType::Tri,
+		Rule::QName => panic!("{}", x.as_str()),
+		r => unimplemented!("{:?}", r),
+	}
+}
+
+fn build_fn_macro_from_pair(pair: Pair<Rule>) -> FnMacro {
+	match pair.as_rule() {
+		Rule::AlwaysComb	=> FnMacro::AlwaysComb,
+		Rule::AlwaysFF		=> {
+			let mut args = Vec::new();
+			for arg in pair.into_inner() {
+				let mut p = arg.into_inner();
+				let name = p.next().unwrap().as_str().to_string();
+				let trigger = match p.next() {
+					Some(trig)	=> Some(Trigger::from(trig.as_str())),
+					None		=> None,
+				};
+				args.push((name, trigger));
+			}
+			FnMacro::AlwaysFF(args)
+		},
+		r => unimplemented!("{:?}", r),
+	}
+}
+
 
 fn build_stmt_from_pair(pair: Pair<Rule>) -> Statement {
 	match pair.as_rule() {

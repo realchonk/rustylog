@@ -8,4 +8,8 @@ fn main() {
 	let code = "if self.a[10..0] { self.a <= 42; } else {}";
 	let stmt = parse_stmt(code);
 	println!("{}", stmt);
+
+	let code = "#[always_ff(x: posedge)] pub fn main(&mut self, a: Input<[logic; 16]>) -> [logic; 16] { }";
+	let func = parse_func(code);
+	println!("{}", func);
 }

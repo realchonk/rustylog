@@ -1,16 +1,21 @@
 
-Function = { FnMacro? ~ "pub"? ~ "fn" ~ "(" ~ Args? ~ ")" ~ ("->" ~ Type)? ~ BlockStmt }
+Function = { FnMacro? ~ Visibility? ~ "fn" ~ Ident ~ "(" ~ Args? ~ ")" ~ ("->" ~ Type)? ~ BlockStmt }
 
-FnMacro = { "#[always_ff(" ~ AlwaysFFArgs ~ ")]" | "#[always_comb]" }
+FnMacro = { AlwaysFF | AlwaysComb }
+AlwaysFF = { "#[always_ff(" ~ AlwaysFFArgs ~ ")]" }
+AlwaysComb = { "#[always_comb]" }
 AlwaysFFArg = { Ident ~ (":" ~ Trigger)? }
-AlwaysFFArgs = { AlwaysFFArg ~ ("," ~ AlwaysFFArg)* ~ ","? }
+AlwaysFFArgs = _{ AlwaysFFArg ~ ("," ~ AlwaysFFArg)* ~ ","? }
 
-Args = { (Arg | SelfRef) ~ ("," ~ Arg)* ~ ","? }
+Args = _{ (Arg | SelfRef) ~ ("," ~ Arg)* ~ ","? }
 Arg = { Ident ~ ":" ~ Type }
-SelfRef = { "&" ~ "mut"? ~ "self" }
+SelfRef = { "&" ~ Mut? ~ "self" }
 
-Type = { SubType | IOType ~ "<" ~ SubType ~ ">" }
-SubType = { "[" ~ SubType ~ ";" ~ Index ~ "]" | "logic" | "tri" | QName }
+Type = { IOType ~ "<" ~ SubType ~ ">" | SubType }
+SubType = { ArrayType | LogicType | TriType | QName }
+ArrayType = { "[" ~ SubType ~ ";" ~ Index ~ "]" }
+LogicType = @{ "logic" }
+TriType = @{ "tri" }
 
 
 Statement = { IfStmt
@@ -58,5 +63,7 @@ AddSubOp = @{ "+" | "-" }
 AssignOp = @{ "=" | "<=" }
 Trigger = @{ "posedge" | "negedge" }
 IOType = @{ "Input" | "Output" | "InOut" }
+Visibility = @{ "pub" }
+Mut = @{ "mut" }
 
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
