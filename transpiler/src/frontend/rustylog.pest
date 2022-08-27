@@ -1,4 +1,4 @@
-Program = { (Struct|Impl)* }
+Program = { SOI ~ (Struct|Impl)* ~ EOI }
 
 Struct = { Visibility? ~ "struct" ~ Ident ~ "{" ~ StructVariables ~ "}" }
 Impl = { "impl" ~ Ident ~ "{" ~ Function* ~ "}" }

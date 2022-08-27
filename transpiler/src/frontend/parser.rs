@@ -30,6 +30,27 @@ pub fn parse_impl(code: &str) -> Impl {
 	build_impl_from_pair(ast)
 }
 
+pub fn parse_program(code: &str) -> Program {
+	let ast = RustylogParser::parse(Rule::Program, code).unwrap().next().unwrap();
+	build_program_from_pair(ast)
+}
+
+fn build_program_from_pair(pair: Pair<Rule>) -> Program {
+	println!("{:?}", pair);
+	let mut p = pair.into_inner();
+	let mut elements = Vec::new();
+	while let Some(tk) = p.next() {
+		match tk.as_rule() {
+			Rule::Struct	=> elements.push(ProgramElement::Struct(build_struct_from_pair(tk))),
+			Rule::Impl		=> elements.push(ProgramElement::Impl(build_impl_from_pair(tk))),
+			Rule::EOI		=> break,
+			r				=> unimplemented!("{:?}", r),
+		}
+	}
+
+	Program { elements }
+}
+
 fn build_impl_from_pair(pair: Pair<Rule>) -> Impl {
 	let mut p = pair.into_inner();
 	let name = p.next().unwrap().as_str().to_string();

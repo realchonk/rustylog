@@ -114,6 +114,16 @@ pub struct Impl {
 	pub functions: Vec<Function>,
 }
 
+#[derive(Debug)]
+pub enum ProgramElement {
+	Struct(Struct),
+	Impl(Impl),
+}
+
+#[derive(Debug)]
+pub struct Program {
+	pub elements: Vec<ProgramElement>,
+}
 
 
 impl Display for UnaryOp {
@@ -378,6 +388,9 @@ impl Display for Variable {
 
 impl Display for Struct {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		if let Some(vis) = &self.visibility {
+			write!(f, "{} ", vis)?;
+		}
 		writeln!(f, "struct {} {{", self.name)?;
 		for var in &self.variables {
 			writeln!(f, "\t{}", var)?;
@@ -390,9 +403,31 @@ impl Display for Impl {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		writeln!(f, "impl {} {{", self.name)?;
 		for func in &self.functions {
-			writeln!(f, "\t{}", func)?;
+			let s = format!("{}", func);
+			for s in s.split('\n') {
+				writeln!(f, "\t{}", s)?;
+			}
 		}
 		write!(f, "}}")
+	}
+}
+
+impl Display for ProgramElement {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		use ProgramElement::*;
+		match self {
+			Struct(s)	=> write!(f, "{}", s),
+			Impl(i)		=> write!(f, "{}", i),
+		}
+	}
+}
+
+impl Display for Program {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		for e in &self.elements {
+			writeln!(f, "{}", e)?;
+		}
+		Ok(())
 	}
 }
 

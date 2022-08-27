@@ -20,4 +20,21 @@ fn main() {
 	let code = "impl Name { pub fn f() {} }";
 	let i = parse_impl(code);
 	println!("{}", i);
+
+	let code = r#"
+pub struct A {
+	pub clk: Input<logic>,
+	pub data_in: Input<[logic; 8]>,
+	pub data_out: Output<[logic; 8]>,
+}
+
+impl A {
+	#[always_ff(clk: posedge)]
+	fn update_data(&mut self) {
+		self.data_out <= self.data_in;
+	}
+}
+"#;
+	let program = parse_program(code);
+	println!("{}", program);
 }
