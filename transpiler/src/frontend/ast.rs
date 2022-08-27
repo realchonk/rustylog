@@ -94,7 +94,25 @@ pub enum Type {
 	Sub(SubType),
 }
 
+#[derive(Debug)]
+pub struct Variable {
+	pub visibility: Option<Visibility>,
+	pub name: String,
+	pub typ: Type,
+}
 
+#[derive(Debug)]
+pub struct Struct {
+	pub visibility: Option<Visibility>,
+	pub name: String,
+	pub variables: Vec<Variable>,
+}
+
+#[derive(Debug)]
+pub struct Impl {
+	pub name: String,
+	pub functions: Vec<Function>,
+}
 
 
 
@@ -346,6 +364,35 @@ impl Display for Type {
 			InOut(sub)	=> write!(f, "InOut<{}>", sub),
 			Sub(sub)	=> write!(f, "{}", sub),
 		}
+	}
+}
+
+impl Display for Variable {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		if let Some(vis) = &self.visibility {
+			write!(f, "{} ", vis)?;
+		}
+		write!(f, "{}: {},", self.name, self.typ)
+	}
+}
+
+impl Display for Struct {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		writeln!(f, "struct {} {{", self.name)?;
+		for var in &self.variables {
+			writeln!(f, "\t{}", var)?;
+		}
+		write!(f, "}}")
+	}
+}
+
+impl Display for Impl {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		writeln!(f, "impl {} {{", self.name)?;
+		for func in &self.functions {
+			writeln!(f, "\t{}", func)?;
+		}
+		write!(f, "}}")
 	}
 }
 

@@ -20,6 +20,56 @@ pub fn parse_func(code: &str) -> Function {
 	build_func_from_pair(ast)
 }
 
+pub fn parse_struct(code: &str) -> Struct {
+	let ast = RustylogParser::parse(Rule::Struct, code).unwrap().next().unwrap();
+	build_struct_from_pair(ast)
+}
+
+pub fn parse_impl(code: &str) -> Impl {
+	let ast = RustylogParser::parse(Rule::Impl, code).unwrap().next().unwrap();
+	build_impl_from_pair(ast)
+}
+
+fn build_impl_from_pair(pair: Pair<Rule>) -> Impl {
+	let mut p = pair.into_inner();
+	let name = p.next().unwrap().as_str().to_string();
+	let mut functions = Vec::new();
+
+	while let Some(tk) = p.next() {
+		functions.push(build_func_from_pair(tk));
+	}
+
+	Impl { name, functions }
+}
+
+fn build_struct_from_pair(pair: Pair<Rule>) -> Struct {
+	let mut p = pair.into_inner();
+	let mut tk = p.next().unwrap();
+
+	let visibility = if tk.as_rule() == Rule::Visibility {
+		let x = Some(Visibility::from(tk.as_str()));
+		tk = p.next().unwrap();
+		x
+	} else { None };
+
+	let name = tk.as_str().to_string();
+	let mut variables = Vec::new();
+	while let Some(tk) = p.next() {
+		let mut p = tk.into_inner();
+		let mut tk = p.next().unwrap();
+		let visibility = if tk.as_rule() == Rule::Visibility {
+			let x = Some(Visibility::from(tk.as_str()));
+			tk = p.next().unwrap();
+			x
+		} else { None };
+		let name = tk.as_str().to_string();
+		let typ = build_type_from_pair(p.next().unwrap());
+		variables.push(Variable { visibility, name, typ });
+	}
+
+	Struct { visibility, name, variables }
+}
+
 fn build_func_from_pair(pair: Pair<Rule>) -> Function {
 	let mut p = pair.into_inner();
 	let mut tk = p.next().unwrap();

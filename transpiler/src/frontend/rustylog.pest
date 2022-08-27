@@ -1,3 +1,10 @@
+Program = { (Struct|Impl)* }
+
+Struct = { Visibility? ~ "struct" ~ Ident ~ "{" ~ StructVariables ~ "}" }
+Impl = { "impl" ~ Ident ~ "{" ~ Function* ~ "}" }
+
+StructVariable = { Visibility? ~ Ident ~ ":" ~ Type }
+StructVariables = _{ StructVariable ~ ("," ~ StructVariable)* ~ ","? }
 
 Function = { FnMacro? ~ Visibility? ~ "fn" ~ Ident ~ "(" ~ Args? ~ ")" ~ ("->" ~ Type)? ~ BlockStmt }
 

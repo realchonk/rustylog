@@ -12,4 +12,12 @@ fn main() {
 	let code = "#[always_ff(x: posedge)] pub fn main(&mut self, a: Input<[logic; 16]>) -> [logic; 16] { }";
 	let func = parse_func(code);
 	println!("{}", func);
+
+	let code = "pub struct Name { var1: logic, var2: [tri; 32], }";
+	let s = parse_struct(code);
+	println!("{}", s);
+
+	let code = "impl Name { pub fn f() {} }";
+	let i = parse_impl(code);
+	println!("{}", i);
 }
