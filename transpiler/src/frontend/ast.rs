@@ -62,12 +62,18 @@ pub struct SelfRef {
 }
 
 #[derive(Debug)]
+pub struct Arg {
+	pub name: String,
+	pub typ: Type,
+}
+
+#[derive(Debug)]
 pub struct Function {
 	pub fn_macro: Option<FnMacro>,
 	pub visibility: Option<Visibility>,
 	pub name: String,
 	pub self_ref: Option<SelfRef>,
-	pub args: Vec<(String, Type)>,
+	pub args: Vec<Arg>,
 	pub ret_type: Option<Type>,
 	pub body: BlockStmt,
 }
@@ -296,6 +302,11 @@ impl Display for SelfRef {
 	}
 }
 
+impl Display for Arg {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "{}: {}", self.name, self.typ)
+	}
+}
 impl Display for Function {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		if let Some(fn_macro) = &self.fn_macro {
@@ -315,10 +326,10 @@ impl Display for Function {
 		if !self.args.is_empty() {
 			let mut iter = self.args.iter();
 			let x = iter.next().unwrap();
-			write!(f, "{}{}: {}", aprefix, x.0, x.1)?;
+			write!(f, "{}{}", aprefix, x)?;
 
 			for x in iter {
-				write!(f, ", {}: {}", x.0, x.1)?;
+				write!(f, ", {}", x)?;
 			}
 		}
 		if let Some(rt) = &self.ret_type {
